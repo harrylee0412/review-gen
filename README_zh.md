@@ -1,68 +1,127 @@
 ﻿# review-gen
 
-`review-gen` 是一套面向管理学、战略、创业与创新研究的长期文献综述工具包。它把“检索文献、构建综述语料、收集原文、PDF 转 Markdown、分块检索、规划综述框架、批准计划、生成写作提示词、控制写作规范”串成一条稳定的多 agent 工作流。
+`review-gen` 是一套面向管理学、战略、创业、创新与组织研究的长期文献综述工具包。它把文献检索、语料库构建、全文收集、PDF 转 Markdown、分块检索、综述规划、计划批准和综述写作串成一条稳定的多 agent 工作流。
 
-## 平台模式
+## 平台无关模式
 
-这次版本已经改成平台无关的使用方式。核心脚本不再依赖固定的 Windows 路径，使用时只需要替换三个占位符：
+这一版已经改成平台无关的使用方式。核心脚本不再依赖固定的 Windows 路径，使用时只需要替换三个占位符：
 
-- `<workflow-python>`：能运行这些脚本的 Python 解释器
+- `<workflow-python>`：能够运行这些综述脚本的 Python 解释器
 - `<review-gen-home>`：`review-gen` 包所在目录
 - `<review-workspace>`：某个具体综述项目的工作区目录
 
-也就是说，同一套脚本逻辑可以在 Windows PowerShell、macOS 终端、Linux shell 中使用，区别只在于你实际填入的路径不同。
+也就是说，同一套工作流逻辑可以在 Windows PowerShell、macOS 终端或 Linux shell 中使用，主要差别只在于你填入的本地路径不同。
+
+## 依赖要求
+
+先安装 Python 依赖：
+
+```bash
+pip install -r requirements.txt
+```
+
+当前工具包依赖：
+
+- `requests`
+- `openxlab-dev`
+
+说明：
+
+- 当你通过 `MINERU_ACCESS_KEY` 和 `MINERU_SECRET_KEY` 来鉴权 MinerU 时，会用到 `openxlab-dev`。
+- 如果你只使用直接可用的 MinerU bearer token，并把它写入 `MINERU_API_KEY`，逻辑上不必走 OpenXLab 路径，但为了方便跨机器安装，`requirements.txt` 里仍然把它包含进去了。
+- `openalex-ajg-insights` 的文献检索还依赖本地克隆好的 `openalex-ajg-mcp` 仓库，这个仓库并不包含在当前仓库内。
 
 ## 工具包包含什么
 
-本工具包包含四个 skills：
+目前包里有四个 skills：
 
 - `openalex-ajg-insights`
-  负责文献检索、原始结果留存、语料库合并去重、全文清单生成、PDF 转 Markdown、Markdown 分块与检索。
+  负责检索高等级期刊文献、保留检索语料、准备全文清单、通过 MinerU 把 PDF 转成 Markdown，并高效检索摘要或全文观点。
 - `management-review-planner`
-  负责在正式写作前进入计划模式，生成并持续打磨综述框架。
+  负责在正式写作前构建并持续打磨综述框架。
 - `management-review-writer`
-  负责把已整理好的文献证据和已批准的框架转成正式综述正文。
+  负责把已批准框架和已整理证据转成正式综述正文。
 - `review-orchestrator`
-  负责判断当前项目所处阶段、决定下一步该调用哪个 subagent、并在用户明确口头同意后自动批准或重新打开计划。
+  负责把项目路由到下一步 subagent、检查当前状态，并在用户明确同意后处理计划批准或重新打开计划。
 
-## 规划逻辑怎么改了
+## 规划逻辑
 
-planner 不再默认假设只有一个 `focal concept`。现在的逻辑是：
+planner 不再默认只有一个 `focal concept`。现在它会从用户给出的主题和现有文献出发，把需要综述的构念、概念、机制和关系拆解出来。
 
-1. 根据用户给出的主题拆解出需要处理的构念、概念、机制和关系
-2. 先确定这些内容分别需要怎样定义和界定边界
-3. 再生成章节级框架
-4. 最后进一步生成段落级蓝图
+当前的规划顺序是：
 
-所以无论是单概念、双概念关系、中介机制、调节逻辑，planner 都不会先套死某一种模板，而是先基于主题和文献给用户一个可打磨的框架。
+1. 追溯关键构念定义与概念边界
+2. 提出章节级架构
+3. 细化每个章节内部的段落级蓝图
+4. 在冻结框架前与用户反复打磨
 
-## 计划打磨与存档机制
+这意味着 planner 可以支持单概念综述、双概念关系综述、中介逻辑、调节逻辑，或者更开放的概念性主题，而不需要先被套进僵硬的预设模板。
 
-这是这次升级的重点。
+## 计划存档机制
 
-现在每次 planner 生成或重写 `review_plan.md` 时，都会同时在 `07_plan/history/` 下创建一个带时间戳的架构存档点，方便查看每一轮框架迭代。批准 plan 或重新打开 plan 时，orchestrator 也会再额外留一个带时间戳的状态存档。
+每次 planner 修订时，都会把当前活跃框架写入 `07_plan/review_plan.md`，同时在 `07_plan/history/` 下生成一个带时间戳的快照。
 
-也就是说，后续你可以同时拥有：
+因此你会同时拥有两层规划记录：
 
-- 当前正在执行的活跃版 `review_plan.md`
-- 每一次打磨留下的历史版 `07_plan/history/*.md`
+- 当前正在执行的活跃框架 `review_plan.md`
+- 完整的历史检查点 `07_plan/history/*.md`
 
-这样就能清楚追踪框架是如何变化的。
+当计划被批准或重新打开时，orchestrator 也会额外留下一个带时间戳的状态快照，方便长期追踪框架是如何演化的。
 
-## 当前推荐工作流
+## MinerU 鉴权
 
-1. 用 `openalex-ajg-insights` 构建语料库
-2. 用 `management-review-planner` 生成第一版 `review_plan.md`
-3. 和用户打磨章节与段落蓝图
-4. 每轮修改自动生成时间戳架构存档
-5. 用户口头确认后，由 `review-orchestrator` 自动批准计划
-6. 再用 `management-review-writer` 按已批准框架执行正文写作
+MinerU 凭证不会写进代码，而是放在独立的 env 文件里，通常是：
+
+`04_fulltext/mineru.env`
+
+当前工作流支持两种鉴权路径：
+
+1. `MINERU_API_KEY`
+   如果你已经有可以直接调用 MinerU 的 token，就用这个。
+
+2. `MINERU_ACCESS_KEY` + `MINERU_SECRET_KEY`
+   如果你通过 OpenXLab SDK 鉴权，就使用这两个字段。工作流会先尝试把它们换成 JWT，然后再调用 MinerU。
+
+请求头会自动规范成：
+
+`Authorization: Bearer <token>`
+
+一个典型的 env 文件如下：
+
+```env
+MINERU_API_KEY=
+MINERU_ACCESS_KEY=replace-with-your-access-key
+MINERU_SECRET_KEY=replace-with-your-secret-key
+MINERU_API_BASE_URL=https://mineru.net
+MINERU_MODEL_VERSION=vlm
+MINERU_LANGUAGE=en
+MINERU_ENABLE_FORMULA=true
+MINERU_ENABLE_TABLE=true
+MINERU_IS_OCR=false
+```
+
+建议做法：
+
+- 如果你已经有可用的 MinerU bearer token，优先放在 `MINERU_API_KEY`
+- 否则就存 `MINERU_ACCESS_KEY` 和 `MINERU_SECRET_KEY`
+- 不要把任何凭证硬编码到脚本、说明文档或提示词里
+
+## 推荐工作流
+
+1. 用 `openalex-ajg-insights` 构建语料库。
+2. 用 `management-review-planner` 生成第一版 `review_plan.md`。
+3. 和用户一起打磨章节与段落蓝图。
+4. 让每轮规划修订都生成一个时间戳存档。
+5. 用户明确口头确认后，让 `review-orchestrator` 批准计划。
+6. 再用 `management-review-writer` 在已批准框架内执行正文写作。
 
 ## 目录结构
 
 ```text
 review-gen/
+├── README.md
 ├── README_zh.md
+├── requirements.txt
 └── skills/
     ├── openalex-ajg-insights/
     ├── management-review-planner/
@@ -72,4 +131,4 @@ review-gen/
 
 ## 建议的使用顺序
 
-建议先用 `openalex-ajg-insights` 完成检索、筛选和全文准备，再由 `review-orchestrator` 判断是否进入 planner 或 writer。长期使用时，优先让 orchestrator 负责路由和批准控制。
+长期项目里，建议先用 `openalex-ajg-insights` 建立语料，再让 `review-orchestrator` 判断当前工作区应该进入 planning 还是 writing。

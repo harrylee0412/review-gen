@@ -12,6 +12,25 @@ This version is designed to be platform-agnostic. The core scripts no longer dep
 
 The same workflow logic can therefore be used from Windows PowerShell, macOS Terminal, or a Linux shell. The main difference is only the local path you supply.
 
+## Requirements
+
+Install the Python dependencies with:
+
+```bash
+pip install -r requirements.txt
+```
+
+The current toolkit depends on:
+
+- `requests`
+- `openxlab-dev`
+
+Notes:
+
+- `openxlab-dev` is used when you authenticate MinerU through `MINERU_ACCESS_KEY` and `MINERU_SECRET_KEY`.
+- If you only use a direct MinerU bearer token in `MINERU_API_KEY`, the OpenXLab path is not required logically, but it is still included in `requirements.txt` for convenience.
+- Literature search through `openalex-ajg-insights` also depends on a local clone of `openalex-ajg-mcp`, which is not bundled inside this repository.
+
 ## What The Toolkit Contains
 
 The package currently includes four skills:
@@ -102,6 +121,7 @@ Recommended practice:
 review-gen/
 ├── README.md
 ├── README_zh.md
+├── requirements.txt
 └── skills/
     ├── openalex-ajg-insights/
     ├── management-review-planner/
