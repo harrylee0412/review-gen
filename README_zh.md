@@ -24,16 +24,38 @@ pip install -r requirements.txt
 
 - `requests`
 - `openxlab-dev`
+- `httpx`
+- `pydantic`
+- `pandas`
+- `openpyxl`
+- `xlsxwriter`
+- `python-dotenv`
+- `mcp`
 
 说明：
 
+- 这份依赖现在同时覆盖 `review-gen` 本身和内置的 `openalex-ajg-mcp` 后端。
 - 当你通过 `MINERU_ACCESS_KEY` 和 `MINERU_SECRET_KEY` 来鉴权 MinerU 时，会用到 `openxlab-dev`。
 - 如果你只使用直接可用的 MinerU bearer token，并把它写入 `MINERU_API_KEY`，逻辑上不必走 OpenXLab 路径，但为了方便跨机器安装，`requirements.txt` 里仍然把它包含进去了。
-- `openalex-ajg-insights` 的文献检索还依赖本地克隆好的 `openalex-ajg-mcp` 仓库，这个仓库并不包含在当前仓库内。
+
+## 内置 OpenAlex 后端
+
+`review-gen` 现在已经把 `openalex-ajg-mcp` 内置进仓库。
+
+默认内置位置：
+
+- `backend/openalex-ajg-mcp`
+
+这意味着在一台新机器上，通常只需要 clone 一个 `review-gen` 仓库，就可以直接开始使用，不必再单独 clone 一份 `openalex-ajg-mcp`。
+
+如果以后你想覆盖这个内置后端，`openalex-ajg-insights` 依然支持：
+
+- `--repo-root <path>`
+- `OPENALEX_AJG_MCP_ROOT=<path>`
 
 ## 工具包包含什么
 
-目前包里有四个 skills：
+目前包里有四个 skills，再加上内置检索后端：
 
 - `openalex-ajg-insights`
   负责检索高等级期刊文献、保留检索语料、准备全文清单、通过 MinerU 把 PDF 转成 Markdown，并高效检索摘要或全文观点。
@@ -43,6 +65,8 @@ pip install -r requirements.txt
   负责把已批准框架和已整理证据转成正式综述正文。
 - `review-orchestrator`
   负责把项目路由到下一步 subagent、检查当前状态，并在用户明确同意后处理计划批准或重新打开计划。
+- `backend/openalex-ajg-mcp`
+  `openalex-ajg-insights` 调用的内置文献检索后端。
 
 ## 规划逻辑
 
@@ -119,6 +143,8 @@ MINERU_IS_OCR=false
 
 ```text
 review-gen/
+├── backend/
+│   └── openalex-ajg-mcp/
 ├── README.md
 ├── README_zh.md
 ├── requirements.txt

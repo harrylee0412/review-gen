@@ -24,16 +24,38 @@ The current toolkit depends on:
 
 - `requests`
 - `openxlab-dev`
+- `httpx`
+- `pydantic`
+- `pandas`
+- `openpyxl`
+- `xlsxwriter`
+- `python-dotenv`
+- `mcp`
 
 Notes:
 
+- These requirements now cover both `review-gen` itself and the embedded `openalex-ajg-mcp` backend.
 - `openxlab-dev` is used when you authenticate MinerU through `MINERU_ACCESS_KEY` and `MINERU_SECRET_KEY`.
 - If you only use a direct MinerU bearer token in `MINERU_API_KEY`, the OpenXLab path is not required logically, but it is still included in `requirements.txt` for convenience.
-- Literature search through `openalex-ajg-insights` also depends on a local clone of `openalex-ajg-mcp`, which is not bundled inside this repository.
+
+## Bundled OpenAlex Backend
+
+`review-gen` now bundles `openalex-ajg-mcp` inside the repository.
+
+Default bundled location:
+
+- `backend/openalex-ajg-mcp`
+
+This means a fresh machine can usually clone one repository and start from there, without separately cloning `openalex-ajg-mcp`.
+
+If you ever want to override the bundled backend, `openalex-ajg-insights` still supports:
+
+- `--repo-root <path>`
+- `OPENALEX_AJG_MCP_ROOT=<path>`
 
 ## What The Toolkit Contains
 
-The package currently includes four skills:
+The package currently includes four skills plus the bundled search backend:
 
 - `openalex-ajg-insights`
   Searches ranked journals, preserves search corpora, prepares full-text manifests, converts PDFs to Markdown with MinerU, and retrieves abstract or full-text viewpoints efficiently.
@@ -43,6 +65,8 @@ The package currently includes four skills:
   Turns the approved framework and collected evidence into formal literature review prose.
 - `review-orchestrator`
   Routes the project to the next subagent, checks project state, and handles plan approval or reopening after explicit user confirmation.
+- `backend/openalex-ajg-mcp`
+  The embedded literature-search backend used by `openalex-ajg-insights`.
 
 ## Planning Logic
 
@@ -119,6 +143,8 @@ Recommended practice:
 
 ```text
 review-gen/
+├── backend/
+│   └── openalex-ajg-mcp/
 ├── README.md
 ├── README_zh.md
 ├── requirements.txt

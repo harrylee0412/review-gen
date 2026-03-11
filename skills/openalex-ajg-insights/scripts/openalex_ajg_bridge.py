@@ -1,15 +1,17 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import asyncio
 import json
+import os
 import re
 import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
 
-DEFAULT_REPO_ROOT = Path(r"D:\Users\Harry lee\paper\博士期间工作\抓取文献\openalex-ajg-mcp")
+REVIEW_GEN_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_REPO_ROOT = REVIEW_GEN_ROOT / "backend" / "openalex-ajg-mcp"
 
 
 def bootstrap_repo(repo_root: Path) -> dict[str, Any]:
@@ -55,12 +57,12 @@ def add_render_args(parser: argparse.ArgumentParser) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Bridge script for the local openalex-ajg-mcp installation."
+        description="Bridge script for the bundled or user-specified openalex-ajg-mcp installation."
     )
     parser.add_argument(
         "--repo-root",
-        default=str(DEFAULT_REPO_ROOT),
-        help="Absolute path to the local openalex-ajg-mcp repository.",
+        default=os.environ.get("OPENALEX_AJG_MCP_ROOT", str(DEFAULT_REPO_ROOT)),
+        help="Path to the openalex-ajg-mcp repository. Defaults to the bundled backend or OPENALEX_AJG_MCP_ROOT.",
     )
     add_render_args(parser)
 
@@ -501,3 +503,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+

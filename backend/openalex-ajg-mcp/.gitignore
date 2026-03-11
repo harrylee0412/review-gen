@@ -1,0 +1,36 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+.env
+
+# IDEs
+.idea/
+.vscode/
+
+# Project Specific
+*.xlsx
+*.ris
+report_*.xlsx
+citations_*.ris

@@ -1,11 +1,26 @@
 ﻿---
 name: openalex-ajg-insights
-description: Search ABS/AJG-ranked literature through the locally installed openalex-ajg-mcp repository, preserve review corpora for systematic literature reviews, convert collected PDFs to Markdown with MinerU, and retrieve abstract or full-text viewpoints efficiently.
+description: Search ABS/AJG-ranked literature through the bundled openalex-ajg-mcp backend, preserve review corpora for systematic literature reviews, convert collected PDFs to Markdown with MinerU, and retrieve abstract or full-text viewpoints efficiently.
 ---
 
 # OpenAlex AJG Insights
 
 Use this skill when the task is a literature review, gap scan, theory-building exercise, journal-targeted search, or any research workflow that needs business and management papers filtered by ABS/AJG and then upgraded into a reusable review corpus.
+
+## Bundled Backend
+
+This skill now ships with an embedded `openalex-ajg-mcp` backend inside the `review-gen` repository.
+
+Default backend location:
+
+- `<review-gen-home>/backend/openalex-ajg-mcp`
+
+If needed, you can still override the backend location with:
+
+- `--repo-root <path>`
+- `OPENALEX_AJG_MCP_ROOT=<path>`
+
+This means a fresh machine only needs to clone `review-gen` and install `requirements.txt`; a second standalone clone of `openalex-ajg-mcp` is no longer required for the default workflow.
 
 ## Core Scripts
 
@@ -39,7 +54,19 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   --topic "Entrepreneurial bricolage"
 ```
 
-### B. Merge raw search results into a corpus
+### B. Search through the bundled backend
+
+```text
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/openalex_ajg_bridge.py \
+  search-abs \
+  --query "AI agents" \
+  --field "INFO MAN" \
+  --min-rank "4*" \
+  --year-start 2023 \
+  --limit 10
+```
+
+### C. Merge raw search results into a corpus
 
 ```text
 python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
@@ -47,7 +74,7 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   merge-search-results
 ```
 
-### C. Prepare the full-text manifest
+### D. Prepare the full-text manifest
 
 ```text
 python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
@@ -55,7 +82,7 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   prepare-fulltext-manifest --min-priority medium
 ```
 
-### D. Convert PDFs to Markdown with MinerU
+### E. Convert PDFs to Markdown with MinerU
 
 ```text
 python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
@@ -64,7 +91,7 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   --env-path <review-workspace>/04_fulltext/mineru.env
 ```
 
-### E. Chunk and retrieve before reading
+### F. Chunk and retrieve before reading
 
 ```text
 python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
@@ -83,7 +110,7 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   --include-neighbors
 ```
 
-### F. Hand off to the orchestrator
+### G. Hand off to the orchestrator
 
 - Use `review-orchestrator` to decide whether the project should go to planning or writing next.
 

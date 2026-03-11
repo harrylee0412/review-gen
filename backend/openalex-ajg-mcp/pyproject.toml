@@ -1,0 +1,37 @@
+[project]
+name = "openalex-ajg-mcp"
+version = "0.2.2"
+description = "MCP server for searching OpenAlex literature with ABS Journal Guide filtering."
+authors = [{name = "Antigravity", email = "antigravity@example.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["mcp", "openalex", "literature", "research", "abs", "citations"]
+license = {text = "MIT"}
+dependencies = [
+    "mcp>=1.0.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.0.0",
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "xlsxwriter>=3.1.0",
+    "python-dotenv>=1.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/harrylee0412/openalex-ajg-mcp"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openalex_mcp"]
+
+[tool.hatch.build]
+include = [
+    "src/openalex_mcp/**/*.py",
+    "src/openalex_mcp/data/*.csv"
+]
+
+[project.scripts]
+openalex-ajg-mcp = "openalex_mcp.server:main"

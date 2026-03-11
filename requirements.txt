@@ -1,2 +1,9 @@
 ﻿requests>=2.31.0,<3.0.0
 openxlab-dev>=0.4.0
+httpx>=0.27.0
+pydantic>=2.0.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+python-dotenv>=1.0.0
+mcp>=1.0.0
