@@ -1,6 +1,6 @@
 ﻿# review-gen
 
-`review-gen` 是一套面向管理学、战略、创业、创新与组织研究的长期文献综述工具包。它把文献检索、语料库构建、全文收集、PDF 转 Markdown、分块检索、综述规划、计划批准和综述写作串成一条稳定的多 agent 工作流。
+`review-gen` 是一套面向管理学、战略、创业、创新与组织研究的长期文献综述工具包。它把文献检索、语料库构建、增量文献下载、全文收集、PDF 转 Markdown、分块检索、综述规划、计划批准和综述写作串成一条稳定的多 agent 工作流。
 
 ## 平台无关模式
 
@@ -31,34 +31,39 @@ pip install -r requirements.txt
 - `xlsxwriter`
 - `python-dotenv`
 - `mcp`
+- `beautifulsoup4`
+- `curl-cffi`
+- `cloudscraper`
+- `pymupdf4llm`
+- `lxml`
 
 说明：
 
-- 这份依赖现在同时覆盖 `review-gen` 本身和内置的 `openalex-ajg-mcp` 后端。
+- 这份依赖现在同时覆盖 `review-gen` 本身，以及内置的 `openalex-ajg-mcp` 和 `paper-download-mcp` 后端。
 - 当你通过 `MINERU_ACCESS_KEY` 和 `MINERU_SECRET_KEY` 来鉴权 MinerU 时，会用到 `openxlab-dev`。
 - 如果你只使用直接可用的 MinerU bearer token，并把它写入 `MINERU_API_KEY`，逻辑上不必走 OpenXLab 路径，但为了方便跨机器安装，`requirements.txt` 里仍然把它包含进去了。
 
-## 内置 OpenAlex 后端
+## 内置后端
 
-`review-gen` 现在已经把 `openalex-ajg-mcp` 内置进仓库。
-
-默认内置位置：
+`review-gen` 现在已经把两个后端都内置进仓库：
 
 - `backend/openalex-ajg-mcp`
+- `backend/paper-download-mcp`
 
-这意味着在一台新机器上，通常只需要 clone 一个 `review-gen` 仓库，就可以直接开始使用，不必再单独 clone 一份 `openalex-ajg-mcp`。
+这意味着在一台新机器上，通常只需要 clone 一个 `review-gen` 仓库，就可以直接开始使用，不必再单独 clone 检索后端或下载后端。
 
-如果以后你想覆盖这个内置后端，`openalex-ajg-insights` 依然支持：
+如果以后你想覆盖这些内置后端，工作流依然支持：
 
-- `--repo-root <path>`
+- `--repo-root <path>` 用于 OpenAlex bridge
 - `OPENALEX_AJG_MCP_ROOT=<path>`
+- `PAPER_DOWNLOAD_MCP_ROOT=<path>`
 
 ## 工具包包含什么
 
-目前包里有四个 skills，再加上内置检索后端：
+目前包里有四个 skills，再加上内置后端：
 
 - `openalex-ajg-insights`
-  负责检索高等级期刊文献、保留检索语料、准备全文清单、通过 MinerU 把 PDF 转成 Markdown，并高效检索摘要或全文观点。
+  负责检索高等级期刊文献、保留检索语料、准备全文清单、按 manifest 增量下载重点文献、通过 MinerU 把 PDF 转成 Markdown，并高效检索摘要或全文观点。
 - `management-review-planner`
   负责在正式写作前构建并持续打磨综述框架。
 - `management-review-writer`
@@ -67,6 +72,27 @@ pip install -r requirements.txt
   负责把项目路由到下一步 subagent、检查当前状态，并在用户明确同意后处理计划批准或重新打开计划。
 - `backend/openalex-ajg-mcp`
   `openalex-ajg-insights` 调用的内置文献检索后端。
+- `backend/paper-download-mcp`
+  manifest 增量下载工作流调用的内置 PDF 下载后端。
+
+## 增量全文下载
+
+现在全文流程已经支持基于 `fulltext_manifest.csv` 的增量下载。
+
+这个功能特别适合：
+
+- 先下载经典或奠基性文献
+- 暂时不下载优先级较低的文献
+- 让 manifest 一直作为“缺什么、下了什么、转了什么、哪里失败了”的唯一真值表
+
+推荐方式是：
+
+1. 先完成检索并合并 corpus
+2. 再运行 `prepare-fulltext-manifest`
+3. 先用更高优先级或较小上限下载第一批经典文献
+4. 后续再按需要继续补下载其他文献
+
+下载器默认是增量模式，所以已经存在 PDF 的文献会自动跳过，除非你明确要求覆盖。
 
 ## 规划逻辑
 
@@ -144,7 +170,8 @@ MINERU_IS_OCR=false
 ```text
 review-gen/
 ├── backend/
-│   └── openalex-ajg-mcp/
+│   ├── openalex-ajg-mcp/
+│   └── paper-download-mcp/
 ├── README.md
 ├── README_zh.md
 ├── requirements.txt
@@ -157,4 +184,4 @@ review-gen/
 
 ## 建议的使用顺序
 
-长期项目里，建议先用 `openalex-ajg-insights` 建立语料，再让 `review-orchestrator` 判断当前工作区应该进入 planning 还是 writing。
+长期项目里，建议先用 `openalex-ajg-insights` 建立语料，用 manifest 驱动下载优先级 PDF，再让 `review-orchestrator` 判断当前工作区应该进入 planning 还是 writing。

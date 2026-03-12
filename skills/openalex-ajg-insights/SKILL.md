@@ -1,42 +1,45 @@
 ﻿---
 name: openalex-ajg-insights
-description: Search ABS/AJG-ranked literature through the bundled openalex-ajg-mcp backend, preserve review corpora for systematic literature reviews, convert collected PDFs to Markdown with MinerU, and retrieve abstract or full-text viewpoints efficiently.
+description: Search ABS/AJG-ranked literature through the bundled openalex-ajg-mcp backend, preserve review corpora for systematic literature reviews, download shortlisted papers through the bundled paper-download backend, convert collected PDFs to Markdown with MinerU, and retrieve abstract or full-text viewpoints efficiently.
 ---
 
 # OpenAlex AJG Insights
 
 Use this skill when the task is a literature review, gap scan, theory-building exercise, journal-targeted search, or any research workflow that needs business and management papers filtered by ABS/AJG and then upgraded into a reusable review corpus.
 
-## Bundled Backend
+## Bundled Backends
 
-This skill now ships with an embedded `openalex-ajg-mcp` backend inside the `review-gen` repository.
-
-Default backend location:
+This skill now ships with two embedded backends inside `review-gen`:
 
 - `<review-gen-home>/backend/openalex-ajg-mcp`
+- `<review-gen-home>/backend/paper-download-mcp`
 
-If needed, you can still override the backend location with:
+This means a fresh machine usually only needs to clone `review-gen` and install `requirements.txt`.
 
-- `--repo-root <path>`
+If needed, you can still override backend locations with:
+
+- `--repo-root <path>` for the OpenAlex bridge
 - `OPENALEX_AJG_MCP_ROOT=<path>`
-
-This means a fresh machine only needs to clone `review-gen` and install `requirements.txt`; a second standalone clone of `openalex-ajg-mcp` is no longer required for the default workflow.
+- `PAPER_DOWNLOAD_MCP_ROOT=<path>`
 
 ## Core Scripts
 
 - `scripts/openalex_ajg_bridge.py`
   Use for search, journal scans, and report summaries.
 - `scripts/review_workflow.py`
-  Use for systematic-review workspaces, corpus merging, full-text manifests, MinerU conversion, Markdown chunking, and retrieval.
+  Use for systematic-review workspaces, corpus merging, manifest preparation, MinerU conversion, Markdown chunking, and retrieval.
+- `scripts/download_manifest_papers.py`
+  Use for incremental PDF downloading from `fulltext_manifest.csv`.
 
 ## Default Decision Rules
 
 1. Start with abstract screening.
 2. Upgrade to full text only for necessary papers.
 3. When the user wants a reusable or systematic review, create a review workspace.
-4. When the user has collected PDFs, convert them to Markdown before asking AI to read them.
-5. When the user asks for viewpoints from full text, do not load whole papers at once.
-6. For long-running review projects, hand off to `review-orchestrator` after the corpus is ready.
+4. If classic or foundational papers should be collected first, download them from the manifest before expanding the set.
+5. When the user has collected or downloaded PDFs, convert them to Markdown before asking AI to read them.
+6. When the user asks for viewpoints from full text, do not load whole papers at once.
+7. For long-running review projects, hand off to `review-orchestrator` after the corpus is ready.
 
 ## Platform-Agnostic Quick Start
 
@@ -54,7 +57,7 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   --topic "Entrepreneurial bricolage"
 ```
 
-### B. Search through the bundled backend
+### B. Search through the bundled OpenAlex backend
 
 ```text
 python <review-gen-home>/skills/openalex-ajg-insights/scripts/openalex_ajg_bridge.py \
@@ -82,7 +85,18 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   prepare-fulltext-manifest --min-priority medium
 ```
 
-### E. Convert PDFs to Markdown with MinerU
+### E. Download classic or priority PDFs first
+
+```text
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/download_manifest_papers.py \
+  --workspace <review-workspace> \
+  --min-priority high \
+  --max-papers 5
+```
+
+The downloader is incremental. By default it only targets papers whose PDFs are still missing. This makes it easy to download classic papers first and then come back later for newly needed papers.
+
+### F. Convert PDFs to Markdown with MinerU
 
 ```text
 python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
@@ -91,7 +105,7 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   --env-path <review-workspace>/04_fulltext/mineru.env
 ```
 
-### F. Chunk and retrieve before reading
+### G. Chunk and retrieve before reading
 
 ```text
 python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
@@ -110,18 +124,20 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py
   --include-neighbors
 ```
 
-### G. Hand off to the orchestrator
+### H. Hand off to the orchestrator
 
 - Use `review-orchestrator` to decide whether the project should go to planning or writing next.
 
 ## How To Think While Using This Skill
 
 - For a fast literature scan, stay at the abstract layer.
-- For a structured review, keep four layers separate:
+- For a structured review, keep five layers separate:
   - raw search layer
   - merged corpus and screening layer
+  - full-text manifest and download layer
   - full-text evidence layer
   - frozen review-plan layer
+- For download planning, let citations and theory centrality drive which classic papers are fetched first.
 - For full-text work, retrieve only the chunks needed for the active question.
 
 ## References

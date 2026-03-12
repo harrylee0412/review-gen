@@ -1,4 +1,4 @@
-# PDF To Markdown Pipeline
+﻿# PDF To Markdown Pipeline
 
 Use this note when the user wants to move from shortlisted papers to machine-readable full text.
 
@@ -6,20 +6,40 @@ Use this note when the user wants to move from shortlisted papers to machine-rea
 
 Large models usually do a poor job with raw PDFs. The safer workflow is:
 
-1. collect the needed PDFs
-2. standardize filenames
-3. convert PDFs to Markdown
-4. chunk the Markdown
-5. retrieve only the relevant chunks
+1. shortlist the needed papers
+2. download or collect the PDFs
+3. standardize filenames
+4. convert PDFs to Markdown
+5. chunk the Markdown
+6. retrieve only the relevant chunks
+
+## PDF Acquisition Strategy
+
+There are now two acquisition paths:
+
+- manual collection into `04_fulltext/pdf_inbox`
+- incremental downloading through `scripts/download_manifest_papers.py`
+
+The automated path is useful when the review already has a `fulltext_manifest.csv` and the user wants to fetch classic or priority papers first, then return later for additional papers.
+
+Recommended order:
+
+1. run `prepare-fulltext-manifest`
+2. run `download_manifest_papers.py --min-priority high --max-papers N` for foundational papers
+3. inspect the updated manifest
+4. manually supplement any papers that still need special handling
+5. only then run MinerU conversion
 
 ## PDF Storage Rules
 
 Store PDFs in:
 
 - `04_fulltext/pdf_inbox`
-  Newly collected files waiting for conversion.
+  Newly collected or newly downloaded files waiting for conversion.
 - `04_fulltext/pdf_archive`
   Original files retained after conversion.
+- `04_fulltext/download_batches`
+  JSON summaries of incremental download attempts.
 
 Preferred filename rule:
 
@@ -37,6 +57,8 @@ Why this rule helps:
 - manual checking is easy
 - chunk retrieval can map a Markdown folder back to a paper key
 
+The automated downloader renames successful downloads to the manifest's `expected_pdf_name`, so manual and automatic acquisition stay aligned.
+
 ## Manifest Strategy
 
 Use `04_fulltext/fulltext_manifest.csv` as the operational checklist.
@@ -46,6 +68,10 @@ Key fields:
 - `expected_pdf_name`
 - `pdf_status`
 - `pdf_path`
+- `download_status`
+- `download_source`
+- `download_error`
+- `download_batch`
 - `md_status`
 - `md_path`
 - `mineru_batch_id`
@@ -54,7 +80,9 @@ Key fields:
 This makes it easy to see:
 
 - which important papers are still missing
-- which PDFs have been uploaded
+- which PDFs were downloaded automatically
+- which download attempts failed and why
+- which papers still need manual intervention
 - which conversions failed
 - which papers already have usable Markdown
 
@@ -111,8 +139,8 @@ Turn OCR on when:
 ## Practical Sequence
 
 1. Run `prepare-fulltext-manifest`.
-2. Ask the user to collect the missing PDFs.
-3. Put the PDFs into `pdf_inbox` using the naming rule.
+2. Download a first batch of classics or manually collect the missing PDFs.
+3. Put all PDFs into `pdf_inbox` using the naming rule.
 4. Create `mineru.env` from `mineru.env.example`.
 5. Run `convert-pdfs-with-mineru`.
 6. Check `fulltext_manifest.csv` for failed or missing outputs.

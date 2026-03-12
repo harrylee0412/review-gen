@@ -1,6 +1,6 @@
 ﻿# review-gen
 
-`review-gen` is a long-horizon literature review toolkit for management, strategy, entrepreneurship, innovation, and organization research. It connects literature search, corpus construction, full-text collection, PDF-to-Markdown conversion, chunk retrieval, review planning, plan approval, and review drafting into one stable multi-agent workflow.
+`review-gen` is a long-horizon literature review toolkit for management, strategy, entrepreneurship, innovation, and organization research. It connects literature search, corpus construction, incremental paper downloading, full-text collection, PDF-to-Markdown conversion, chunk retrieval, review planning, plan approval, and review drafting into one stable multi-agent workflow.
 
 ## Platform-Agnostic Mode
 
@@ -31,34 +31,39 @@ The current toolkit depends on:
 - `xlsxwriter`
 - `python-dotenv`
 - `mcp`
+- `beautifulsoup4`
+- `curl-cffi`
+- `cloudscraper`
+- `pymupdf4llm`
+- `lxml`
 
 Notes:
 
-- These requirements now cover both `review-gen` itself and the embedded `openalex-ajg-mcp` backend.
+- These requirements now cover `review-gen` itself plus the bundled `openalex-ajg-mcp` and `paper-download-mcp` backends.
 - `openxlab-dev` is used when you authenticate MinerU through `MINERU_ACCESS_KEY` and `MINERU_SECRET_KEY`.
 - If you only use a direct MinerU bearer token in `MINERU_API_KEY`, the OpenXLab path is not required logically, but it is still included in `requirements.txt` for convenience.
 
-## Bundled OpenAlex Backend
+## Bundled Backends
 
-`review-gen` now bundles `openalex-ajg-mcp` inside the repository.
-
-Default bundled location:
+`review-gen` now bundles two backends inside the repository:
 
 - `backend/openalex-ajg-mcp`
+- `backend/paper-download-mcp`
 
-This means a fresh machine can usually clone one repository and start from there, without separately cloning `openalex-ajg-mcp`.
+This means a fresh machine can usually clone one repository and start from there, without separately cloning additional search or download backends.
 
-If you ever want to override the bundled backend, `openalex-ajg-insights` still supports:
+If you ever want to override the bundled backends, the workflow still supports:
 
-- `--repo-root <path>`
+- `--repo-root <path>` for the OpenAlex bridge
 - `OPENALEX_AJG_MCP_ROOT=<path>`
+- `PAPER_DOWNLOAD_MCP_ROOT=<path>`
 
 ## What The Toolkit Contains
 
-The package currently includes four skills plus the bundled search backend:
+The package currently includes four skills plus the bundled backends:
 
 - `openalex-ajg-insights`
-  Searches ranked journals, preserves search corpora, prepares full-text manifests, converts PDFs to Markdown with MinerU, and retrieves abstract or full-text viewpoints efficiently.
+  Searches ranked journals, preserves search corpora, prepares full-text manifests, downloads shortlisted papers incrementally, converts PDFs to Markdown with MinerU, and retrieves abstract or full-text viewpoints efficiently.
 - `management-review-planner`
   Builds and iteratively refines the review framework before drafting begins.
 - `management-review-writer`
@@ -67,6 +72,27 @@ The package currently includes four skills plus the bundled search backend:
   Routes the project to the next subagent, checks project state, and handles plan approval or reopening after explicit user confirmation.
 - `backend/openalex-ajg-mcp`
   The embedded literature-search backend used by `openalex-ajg-insights`.
+- `backend/paper-download-mcp`
+  The embedded PDF-download backend used by the incremental full-text acquisition workflow.
+
+## Incremental Full-Text Downloading
+
+The full-text pipeline now supports incremental downloading from `fulltext_manifest.csv`.
+
+This is useful when:
+
+- you want to fetch classic or foundational papers first
+- you want to postpone lower-priority papers
+- you want the manifest to remain the single source of truth for what is missing, downloaded, converted, or failed
+
+Recommended pattern:
+
+1. run the literature search and merge the corpus
+2. run `prepare-fulltext-manifest`
+3. download a first batch of classic papers with a higher priority threshold or a small cap
+4. come back later and download additional papers only when needed
+
+The downloader is incremental by default, so it skips papers whose PDFs are already present unless you explicitly override that behavior.
 
 ## Planning Logic
 
@@ -144,7 +170,8 @@ Recommended practice:
 ```text
 review-gen/
 ├── backend/
-│   └── openalex-ajg-mcp/
+│   ├── openalex-ajg-mcp/
+│   └── paper-download-mcp/
 ├── README.md
 ├── README_zh.md
 ├── requirements.txt
@@ -157,4 +184,4 @@ review-gen/
 
 ## Suggested Usage Order
 
-In long-running projects, start with `openalex-ajg-insights`, then let `review-orchestrator` decide whether the workspace should move into planning or writing.
+In long-running projects, start with `openalex-ajg-insights`, use the manifest-driven downloader for priority PDFs, then let `review-orchestrator` decide whether the workspace should move into planning or writing.
