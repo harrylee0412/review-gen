@@ -562,7 +562,11 @@ def resolve_mineru_token(env: dict[str, str]) -> str:
         try:
             from openxlab.xlab.handler.user_token import get_jwt
         except ImportError as exc:
-            raise ValueError("openxlab-dev is required to exchange MINERU_ACCESS_KEY and MINERU_SECRET_KEY for a JWT.") from exc
+            raise ValueError(
+                "openxlab-dev is required to exchange MINERU_ACCESS_KEY and MINERU_SECRET_KEY for a JWT. "
+                "Install the optional dependency with `pip install -r requirements-openxlab.txt`, "
+                "or use MINERU_API_KEY instead."
+            ) from exc
         try:
             return get_jwt(access_key, secret_key)
         except Exception as exc:
@@ -979,4 +983,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

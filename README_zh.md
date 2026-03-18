@@ -171,11 +171,19 @@ python <review-gen-home>/skills/management-review-writer/scripts/validate_draft_
 
 ## 运行环境与依赖
 
-安装依赖：
+安装基础依赖：
 
 ```bash
 pip install -r requirements.txt
 ```
+
+如果你准备用 `MINERU_ACCESS_KEY` + `MINERU_SECRET_KEY` 给 MinerU 做鉴权，再额外安装 OpenXLab 的可选依赖：
+
+```bash
+pip install -r requirements-openxlab.txt
+```
+
+如果想要最省事的安装路径，优先使用 `MINERU_API_KEY`，这条路径不需要 OpenXLab 依赖。
 
 项目已做路径无关设计，可在 PowerShell、macOS Terminal、Linux shell 使用。
 

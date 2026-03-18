@@ -16,6 +16,8 @@ This skill now ships with two embedded backends inside `review-gen`:
 
 This means a fresh machine usually only needs to clone `review-gen` and install `requirements.txt`.
 
+If the user wants MinerU auth through `MINERU_ACCESS_KEY` plus `MINERU_SECRET_KEY`, also install `requirements-openxlab.txt`. If they already have a direct MinerU token, prefer `MINERU_API_KEY` and skip that optional package.
+
 If needed, you can still override backend locations with:
 
 - `--repo-root <path>` for the OpenAlex bridge

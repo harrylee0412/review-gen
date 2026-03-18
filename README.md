@@ -172,11 +172,19 @@ Audit checks:
 
 ## Platform and Setup
 
-Install dependencies:
+Install the base dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
+
+If you authenticate MinerU with `MINERU_ACCESS_KEY` plus `MINERU_SECRET_KEY`, install the optional OpenXLab helper dependency as well:
+
+```bash
+pip install -r requirements-openxlab.txt
+```
+
+For the simplest setup, prefer a direct MinerU token in `MINERU_API_KEY`; that path does not need the OpenXLab package.
 
 The toolkit is path-agnostic and works in PowerShell, macOS Terminal, and Linux shells.
 
