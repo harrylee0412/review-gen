@@ -78,7 +78,7 @@ def parse_args() -> argparse.Namespace:
         help="Minimum journal rank.",
     )
     search_abs.add_argument("--year-start", type=int, default=2020, help="Start year.")
-    search_abs.add_argument("--limit", type=int, default=15, help="Maximum results.")
+    search_abs.add_argument("--limit", type=int, default=50, help="Maximum results.")
     search_abs.add_argument(
         "--export-dir",
         help="Optional directory for Excel and RIS exports.",
@@ -89,7 +89,7 @@ def parse_args() -> argparse.Namespace:
     search_journal.add_argument("--journal-name", required=True, help="Journal name.")
     search_journal.add_argument("--query", required=True, help="Search query or * for all.")
     search_journal.add_argument("--year-start", type=int, default=2020, help="Start year.")
-    search_journal.add_argument("--limit", type=int, default=15, help="Maximum results.")
+    search_journal.add_argument("--limit", type=int, default=50, help="Maximum results.")
     search_journal.add_argument(
         "--export-dir",
         help="Optional directory for Excel and RIS exports.",

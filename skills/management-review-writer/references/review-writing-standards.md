@@ -28,6 +28,11 @@ Use abstract-only evidence conservatively, and use full-text evidence for finer-
 
 Every in-text citation must correspond to a real paper in the collected corpus or a verified paper the writer explicitly checked.
 
+### 7. Use an allowlist and audit gate
+
+Build `citation_allowlist.jsonl` before drafting and treat it as the citation whitelist for the current review run.  
+After drafting, run `validate_draft_citations.py`. If the audit fails, revise the draft before delivery.
+
 ## Local Writing Checklist
 
 Before finalizing a review, verify that:
@@ -36,4 +41,6 @@ Before finalizing a review, verify that:
 - the construct-definition paragraphs match the approved definitions
 - the paragraph blueprint has been respected
 - citations are real and in APA style by default
+- every DOI in the draft appears in `citation_allowlist.jsonl`
+- citation audit report is pass
 - the concluding gap follows from the synthesis

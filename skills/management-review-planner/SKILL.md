@@ -92,8 +92,15 @@ Use these placeholders on any operating system:
 python <review-gen-home>/skills/management-review-planner/scripts/build_review_plan.py \
   --workspace <review-workspace> \
   --topic "Entrepreneurial bricolage and innovation" \
-  --word-count 1800
+  --word-count 1800 \
+  --language en \
+  --top-papers-mode dynamic
 ```
+
+如果不传 `--language`，脚本会在交互模式下先询问用户选择 `zh` 或 `en`。  
+选择 `zh` 时，脚本要求先把用户在知网按关键词导出的 `.ris` 文件放到 `<review-workspace>/02_corpus/cnki_ris/`（或通过 `--cn-ris-dir` 指定目录），再把这些 RIS 条目写入计划中的中文文献小节。
+
+`--top-papers-mode dynamic` 会优先覆盖 title/abstract 阶段已纳入（included）的高质量文献，不会为了凑固定数量而默认回填未纳入文献。只有显式传 `--allow-fallback` 才会回填。
 
 After generating the scaffold, refine it with the user. When the user explicitly approves the framework, let `review-orchestrator` update the plan status.
 

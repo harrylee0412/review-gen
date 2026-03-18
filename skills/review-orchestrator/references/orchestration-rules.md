@@ -9,6 +9,7 @@ The orchestrator should:
 - inspect the workspace state
 - identify the correct next subagent
 - enforce the plan-approval gate before drafting
+- enforce the citation-audit gate before final delivery
 - preserve the approved section and paragraph blueprint by default
 - record approval or reopening events and save timestamped plan snapshots
 
@@ -26,3 +27,8 @@ The correct workflow is:
 ## Reopen Rule
 
 If the user wants to change the architecture, paragraph logic, construct definitions, or relationship logic, the orchestrator should reopen the plan and route the project back to the planner.
+
+## Citation Audit Gate
+
+Before treating a draft as final, run citation validation against `citation_allowlist.jsonl`.  
+If citation audit fails, route the task back to writer revision instead of final delivery.

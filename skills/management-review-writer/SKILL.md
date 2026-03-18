@@ -83,10 +83,21 @@ python <review-gen-home>/skills/management-review-writer/scripts/build_review_pa
   --workspace <review-workspace> \
   --topic "Entrepreneurial bricolage and innovation" \
   --word-count 1800 \
+  --top-papers-mode dynamic \
   --output-path <review-workspace>/08_outputs/review_packet.md
 ```
 
-Then reread the plan, packet, and guardrails before drafting the review in prose.
+This command now also writes `08_outputs/citation_allowlist.jsonl` by default.
+
+Before finalizing a draft, run citation validation:
+
+```text
+python <review-gen-home>/skills/management-review-writer/scripts/validate_draft_citations.py \
+  --workspace <review-workspace> \
+  --draft-path <review-workspace>/08_outputs/review_draft.md
+```
+
+Then reread the plan, packet, guardrails, and citation audit report before finalizing the prose.
 
 ## References
 

@@ -1,171 +1,186 @@
 ﻿# review-gen
 
-`review-gen` is a long-horizon literature review toolkit for management, strategy, entrepreneurship, innovation, and organization research. It connects literature search, corpus construction, incremental paper downloading, full-text collection, PDF-to-Markdown conversion, chunk retrieval, review planning, plan approval, and review drafting into one stable multi-agent workflow.
+`review-gen` is a workflow toolkit for long-horizon literature reviews in management, strategy, entrepreneurship, innovation, and organization studies.
 
-## Platform-Agnostic Mode
+It is designed for one practical goal: **turn a large paper library into a controlled, auditable review pipeline** instead of ad-hoc prompting.
 
-This version is designed to be platform-agnostic. The core scripts no longer depend on fixed Windows paths. Replace three placeholders when you run the toolkit:
+## What It Does
 
-- `<workflow-python>`: the Python interpreter that can run the review scripts
-- `<review-gen-home>`: the folder containing the `review-gen` package
-- `<review-workspace>`: the folder for one specific literature review project
+1. Search high-quality journals through ABS/AJG-aware OpenAlex queries.
+2. Build and maintain a reusable corpus workspace.
+3. Prioritize and download full text incrementally from a manifest.
+4. Convert PDF to Markdown (MinerU) and chunk text for retrieval.
+5. Build a frozen review plan before drafting.
+6. Draft review prose under plan constraints.
+7. Prevent citation hallucination with allowlist + DOI audit.
 
-The same workflow logic can therefore be used from Windows PowerShell, macOS Terminal, or a Linux shell. The main difference is only the local path you supply.
+## System Architecture
 
-## Requirements
+The system is split into four skills plus two embedded backends.
 
-Install the Python dependencies with:
+### Skills
+
+- `openalex-ajg-insights`
+  Search, merge corpus, prepare full-text manifest, download PDFs incrementally, convert PDFs to Markdown, and retrieve chunks.
+- `management-review-planner`
+  Build `review_plan.md`, archive plan revisions, support EN/ZH planning, and use dynamic core-paper selection.
+- `management-review-writer`
+  Build `review_packet.md` and `review_guardrails.md`, generate `citation_allowlist.jsonl`, and support draft citation auditing.
+- `review-orchestrator`
+  Enforce workflow gates: plan approval before drafting, citation audit before final delivery.
+
+### Embedded Backends
+
+- `backend/openalex-ajg-mcp`
+- `backend/paper-download-mcp`
+
+## Workspace Contract (Single Source of Truth)
+
+Each project uses one workspace (`<review-workspace>`) with stable folders:
+
+```text
+01_search/      # raw search outputs
+02_corpus/      # merged corpus (master_corpus.jsonl)
+03_screening/   # screening and evidence tables
+04_fulltext/    # manifest + PDF inbox/archive
+05_mineru/      # MinerU raw/extracted outputs
+06_chunks/      # chunk index for retrieval
+07_plan/        # live plan + history snapshots
+08_outputs/     # packets, drafts, citation allowlist, audit report
+```
+
+Key control files:
+
+- `02_corpus/master_corpus.jsonl`
+- `03_screening/screening_table.csv`
+- `04_fulltext/fulltext_manifest.csv`
+- `07_plan/review_plan.md`
+- `08_outputs/review_packet.md`
+- `08_outputs/citation_allowlist.jsonl`
+- `08_outputs/citation_audit_report.md`
+
+## End-to-End Workflow
+
+Use placeholders:
+
+- `<workflow-python>`
+- `<review-gen-home>`
+- `<review-workspace>`
+
+### 1) Initialize workspace
+
+```bash
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
+  init-workspace \
+  --topic "Your topic"
+```
+
+### 2) Search ABS/AJG journals (default limit increased)
+
+```bash
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/openalex_ajg_bridge.py \
+  search-abs \
+  --query "Your query" \
+  --field "INFO MAN" \
+  --min-rank "4" \
+  --year-start 2018 \
+  --limit 50
+```
+
+### 3) Merge corpus and prepare full-text manifest
+
+```bash
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
+  --workspace <review-workspace> \
+  merge-search-results
+
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
+  --workspace <review-workspace> \
+  prepare-fulltext-manifest --min-priority medium
+```
+
+### 4) Download priority papers incrementally
+
+```bash
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/download_manifest_papers.py \
+  --workspace <review-workspace> \
+  --min-priority high \
+  --max-papers 10
+```
+
+### 5) Convert PDFs and chunk Markdown
+
+```bash
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
+  --workspace <review-workspace> \
+  convert-pdfs-with-mineru \
+  --env-path <review-workspace>/04_fulltext/mineru.env
+
+python <review-gen-home>/skills/openalex-ajg-insights/scripts/review_workflow.py \
+  --workspace <review-workspace> \
+  chunk-markdown
+```
+
+### 6) Build plan (dynamic high-quality selection)
+
+```bash
+python <review-gen-home>/skills/management-review-planner/scripts/build_review_plan.py \
+  --workspace <review-workspace> \
+  --topic "Your topic" \
+  --word-count 2500 \
+  --language en \
+  --top-papers-mode dynamic \
+  --top-papers 0
+```
+
+Notes:
+
+- `dynamic` mode prioritizes screened-in (`included`) papers.
+- It does not backfill low-value non-included papers unless `--allow-fallback` is set.
+- Chinese planning supports CNKI RIS from `02_corpus/cnki_ris/`.
+
+### 7) Build writing packet and citation allowlist
+
+```bash
+python <review-gen-home>/skills/management-review-writer/scripts/build_review_packet.py \
+  --workspace <review-workspace> \
+  --topic "Your topic" \
+  --top-papers-mode dynamic \
+  --top-papers 0 \
+  --output-path <review-workspace>/08_outputs/review_packet.md
+```
+
+### 8) Validate citations before final delivery
+
+```bash
+python <review-gen-home>/skills/management-review-writer/scripts/validate_draft_citations.py \
+  --workspace <review-workspace> \
+  --draft-path <review-workspace>/08_outputs/review_draft.md
+```
+
+Audit checks:
+
+- DOI in draft must exist in `citation_allowlist.jsonl`.
+- DOI can be resolver-checked via Crossref/OpenAlex.
+- Optional strict mode checks author-year mapping.
+
+## Quality Gates (Non-Negotiable)
+
+1. No prose drafting before plan approval.
+2. No final delivery before citation audit passes.
+3. No citation outside allowlist unless explicitly verified and added.
+
+## Platform and Setup
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-The current toolkit depends on:
+The toolkit is path-agnostic and works in PowerShell, macOS Terminal, and Linux shells.
 
-- `requests`
-- `openxlab-dev`
-- `httpx`
-- `pydantic`
-- `pandas`
-- `openpyxl`
-- `xlsxwriter`
-- `python-dotenv`
-- `mcp`
-- `beautifulsoup4`
-- `curl-cffi`
-- `cloudscraper`
-- `pymupdf4llm`
-- `lxml`
-
-Notes:
-
-- These requirements now cover `review-gen` itself plus the bundled `openalex-ajg-mcp` and `paper-download-mcp` backends.
-- `openxlab-dev` is used when you authenticate MinerU through `MINERU_ACCESS_KEY` and `MINERU_SECRET_KEY`.
-- If you only use a direct MinerU bearer token in `MINERU_API_KEY`, the OpenXLab path is not required logically, but it is still included in `requirements.txt` for convenience.
-
-## Bundled Backends
-
-`review-gen` now bundles two backends inside the repository:
-
-- `backend/openalex-ajg-mcp`
-- `backend/paper-download-mcp`
-
-This means a fresh machine can usually clone one repository and start from there, without separately cloning additional search or download backends.
-
-If you ever want to override the bundled backends, the workflow still supports:
-
-- `--repo-root <path>` for the OpenAlex bridge
-- `OPENALEX_AJG_MCP_ROOT=<path>`
-- `PAPER_DOWNLOAD_MCP_ROOT=<path>`
-
-## What The Toolkit Contains
-
-The package currently includes four skills plus the bundled backends:
-
-- `openalex-ajg-insights`
-  Searches ranked journals, preserves search corpora, prepares full-text manifests, downloads shortlisted papers incrementally, converts PDFs to Markdown with MinerU, and retrieves abstract or full-text viewpoints efficiently.
-- `management-review-planner`
-  Builds and iteratively refines the review framework before drafting begins.
-- `management-review-writer`
-  Turns the approved framework and collected evidence into formal literature review prose.
-- `review-orchestrator`
-  Routes the project to the next subagent, checks project state, and handles plan approval or reopening after explicit user confirmation.
-- `backend/openalex-ajg-mcp`
-  The embedded literature-search backend used by `openalex-ajg-insights`.
-- `backend/paper-download-mcp`
-  The embedded PDF-download backend used by the incremental full-text acquisition workflow.
-
-## Incremental Full-Text Downloading
-
-The full-text pipeline now supports incremental downloading from `fulltext_manifest.csv`.
-
-This is useful when:
-
-- you want to fetch classic or foundational papers first
-- you want to postpone lower-priority papers
-- you want the manifest to remain the single source of truth for what is missing, downloaded, converted, or failed
-
-Recommended pattern:
-
-1. run the literature search and merge the corpus
-2. run `prepare-fulltext-manifest`
-3. download a first batch of classic papers with a higher priority threshold or a small cap
-4. come back later and download additional papers only when needed
-
-The downloader is incremental by default, so it skips papers whose PDFs are already present unless you explicitly override that behavior.
-
-## Planning Logic
-
-The planner no longer assumes a single focal concept. Instead, it starts from the user topic and the available literature, then decomposes the topic into constructs, concepts, mechanisms, and relationships that need to be reviewed.
-
-The planning sequence is:
-
-1. trace construct definitions and conceptual boundaries
-2. propose the section-level architecture
-3. specify the paragraph-level blueprint inside each section
-4. refine the framework with the user before freezing it
-
-This means the planner can support single-concept reviews, two-concept relationship reviews, mediation logic, moderation logic, or more open-ended conceptual topics without forcing them into a rigid preset template.
-
-## Planning Archives
-
-Every planner revision writes the active framework to `07_plan/review_plan.md` and also creates a timestamped snapshot in `07_plan/history/`.
-
-This gives you two layers of planning records:
-
-- the current live execution framework in `review_plan.md`
-- a full checkpoint history in `07_plan/history/*.md`
-
-When the plan is approved or reopened, the orchestrator also leaves a timestamped status snapshot. This makes framework iteration auditable over time.
-
-## MinerU Authentication
-
-MinerU credentials are intentionally kept outside the code in a dedicated env file, usually:
-
-`04_fulltext/mineru.env`
-
-The workflow supports two authentication paths:
-
-1. `MINERU_API_KEY`
-   Use this when you already have a direct MinerU token.
-
-2. `MINERU_ACCESS_KEY` + `MINERU_SECRET_KEY`
-   Use these when you authenticate through the OpenXLab SDK. The workflow will try to exchange them for a JWT before calling MinerU.
-
-The request header is normalized automatically to:
-
-`Authorization: Bearer <token>`
-
-A typical env file looks like this:
-
-```env
-MINERU_API_KEY=
-MINERU_ACCESS_KEY=replace-with-your-access-key
-MINERU_SECRET_KEY=replace-with-your-secret-key
-MINERU_API_BASE_URL=https://mineru.net
-MINERU_MODEL_VERSION=vlm
-MINERU_LANGUAGE=en
-MINERU_ENABLE_FORMULA=true
-MINERU_ENABLE_TABLE=true
-MINERU_IS_OCR=false
-```
-
-Recommended practice:
-
-- prefer `MINERU_API_KEY` if you already have a working MinerU bearer token
-- otherwise store `MINERU_ACCESS_KEY` and `MINERU_SECRET_KEY`
-- never hardcode credentials in scripts, notes, or prompts
-
-## Recommended Workflow
-
-1. Use `openalex-ajg-insights` to build the corpus.
-2. Use `management-review-planner` to generate the first `review_plan.md`.
-3. Refine the section and paragraph blueprint with the user.
-4. Let every planning revision create a timestamped archive checkpoint.
-5. After explicit user confirmation, let `review-orchestrator` approve the plan.
-6. Use `management-review-writer` to draft the review inside the approved framework.
-
-## Directory Layout
+## Repository Layout
 
 ```text
 review-gen/
@@ -181,7 +196,3 @@ review-gen/
     ├── management-review-writer/
     └── review-orchestrator/
 ```
-
-## Suggested Usage Order
-
-In long-running projects, start with `openalex-ajg-insights`, use the manifest-driven downloader for priority PDFs, then let `review-orchestrator` decide whether the workspace should move into planning or writing.
