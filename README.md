@@ -186,6 +186,30 @@ pip install -r requirements-openxlab.txt
 
 For the simplest setup, prefer a direct MinerU token in `MINERU_API_KEY`; that path does not need the OpenXLab package.
 
+### MinerU API for PDF-to-Markdown
+
+In this project, the MinerU integration is mainly used to convert collected PDF papers into Markdown so the downstream chunking, retrieval, planning, and drafting steps work on clean text instead of raw PDFs.
+
+How to get the API:
+
+1. Register or sign in on the [MinerU official site](https://mineru.net/).
+2. Apply for an API token from the MinerU web console after login. The official API docs describe this token as a token "obtained from the official website", but do not publish a stable deep link to the token page, so the safest entry is the main site after login.
+3. Read the official API docs before use:
+   - [MinerU API docs (EN)](https://mineru.net/doc/docs/index_en/)
+   - [MinerU API docs (ZH)](https://mineru.net/doc/docs/)
+   - [Rate limits / quota notes](https://mineru.net/doc/docs/limit/)
+4. Put the token into `04_fulltext/mineru.env` as:
+
+```env
+MINERU_API_KEY=your-token-from-mineru
+```
+
+Notes:
+
+- The official docs state that API calls require an `Authorization: Bearer <token>` header.
+- The API is currently in beta, and the published limits include up to 200 MB and 600 pages per file, with 2000 pages per day at the highest priority tier per account.
+- If you use `MINERU_ACCESS_KEY` plus `MINERU_SECRET_KEY` instead of a direct token, install `requirements-openxlab.txt` first.
+
 The toolkit is path-agnostic and works in PowerShell, macOS Terminal, and Linux shells.
 
 ## Repository Layout
