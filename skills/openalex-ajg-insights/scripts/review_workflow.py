@@ -15,6 +15,8 @@ from typing import Any
 
 DEFAULT_RUNS_ROOT = Path("quality_reports") / "lit_review_runs"
 DEFAULT_MINERU_BASE = "https://mineru.net"
+PLAN_DIR_NAME = "07_plan"
+LEGACY_PLAN_DIR_NAME = "07_notes"
 
 WORKSPACE_DIRS = [
     "01_search/raw_json",
@@ -28,7 +30,7 @@ WORKSPACE_DIRS = [
     "05_mineru/extracted",
     "05_mineru/batch_jobs",
     "06_chunks",
-    "07_notes",
+    PLAN_DIR_NAME,
     "08_outputs",
 ]
 
@@ -178,9 +180,44 @@ def find_workspace(topic: str | None, workspace: str | None) -> Path:
     return (DEFAULT_RUNS_ROOT / slugify(topic)).resolve()
 
 
+def ensure_plan_layout(workspace: Path) -> dict[str, Any]:
+    canonical_dir = workspace / PLAN_DIR_NAME
+    legacy_dir = workspace / LEGACY_PLAN_DIR_NAME
+    canonical_dir.mkdir(parents=True, exist_ok=True)
+
+    moved_plan = False
+    moved_history = 0
+    if legacy_dir.exists() and legacy_dir.is_dir():
+        legacy_plan = legacy_dir / "review_plan.md"
+        canonical_plan = canonical_dir / "review_plan.md"
+        if legacy_plan.exists() and not canonical_plan.exists():
+            ensure_parent(canonical_plan)
+            shutil.move(str(legacy_plan), str(canonical_plan))
+            moved_plan = True
+
+        legacy_history = legacy_dir / "history"
+        canonical_history = canonical_dir / "history"
+        if legacy_history.exists() and legacy_history.is_dir():
+            canonical_history.mkdir(parents=True, exist_ok=True)
+            for item in sorted(legacy_history.iterdir()):
+                target = canonical_history / item.name
+                if target.exists():
+                    continue
+                shutil.move(str(item), str(target))
+                moved_history += 1
+
+    return {
+        "canonical_plan_dir": str(canonical_dir),
+        "legacy_plan_dir": str(legacy_dir),
+        "moved_plan_file": moved_plan,
+        "moved_history_entries": moved_history,
+    }
+
+
 def build_workspace(workspace: Path, topic: str) -> dict[str, str]:
     for rel in WORKSPACE_DIRS:
         (workspace / rel).mkdir(parents=True, exist_ok=True)
+    layout_result = ensure_plan_layout(workspace)
 
     config_path = workspace / "review_config.json"
     if not config_path.exists():
@@ -257,6 +294,10 @@ def build_workspace(workspace: Path, topic: str) -> dict[str, str]:
         "fulltext_manifest": str(manifest_path),
         "mineru_env_example": str(env_example),
         "pdf_inbox": str(workspace / "04_fulltext" / "pdf_inbox"),
+        "canonical_plan_dir": layout_result["canonical_plan_dir"],
+        "legacy_plan_dir": layout_result["legacy_plan_dir"],
+        "moved_legacy_plan_file": layout_result["moved_plan_file"],
+        "moved_legacy_history_entries": layout_result["moved_history_entries"],
     }
 
 
@@ -936,6 +977,7 @@ def main() -> int:
             payload = build_workspace(workspace, args.topic)
         else:
             workspace = find_workspace(args.topic, args.workspace)
+            layout_result = ensure_plan_layout(workspace)
             if args.command == "merge-search-results":
                 payload = merge_search_results(workspace, args.input)
             elif args.command == "prepare-fulltext-manifest":
@@ -955,6 +997,10 @@ def main() -> int:
                 payload = retrieve_chunks(workspace, args.query, args.purpose, args.top_k, args.include_neighbors)
             else:
                 raise ValueError(f"Unsupported command: {args.command}")
+            payload["canonical_plan_dir"] = layout_result["canonical_plan_dir"]
+            payload["legacy_plan_dir"] = layout_result["legacy_plan_dir"]
+            payload["moved_legacy_plan_file"] = layout_result["moved_plan_file"]
+            payload["moved_legacy_history_entries"] = layout_result["moved_history_entries"]
     except Exception as exc:
         emit({"error": str(exc), "command": args.command}, args.format)
         return 1

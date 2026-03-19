@@ -3,12 +3,15 @@
 import argparse
 import csv
 import json
+import shutil
 from datetime import datetime
 from pathlib import Path
 
 
 APPROVED_PREFIX = "Plan status: APPROVED"
 DRAFT_PREFIX = "Plan status: DRAFT"
+PLAN_DIR_NAME = "07_plan"
+LEGACY_PLAN_DIR_NAME = "07_notes"
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -29,12 +32,45 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def ensure_plan_layout(workspace: Path) -> dict:
+    canonical_dir = workspace / PLAN_DIR_NAME
+    legacy_dir = workspace / LEGACY_PLAN_DIR_NAME
+    canonical_dir.mkdir(parents=True, exist_ok=True)
+
+    moved_plan = False
+    moved_history = 0
+    if legacy_dir.exists() and legacy_dir.is_dir():
+        legacy_plan = legacy_dir / "review_plan.md"
+        canonical_plan = canonical_dir / "review_plan.md"
+        if legacy_plan.exists() and not canonical_plan.exists():
+            shutil.move(str(legacy_plan), str(canonical_plan))
+            moved_plan = True
+
+        legacy_history = legacy_dir / "history"
+        canonical_history = canonical_dir / "history"
+        if legacy_history.exists() and legacy_history.is_dir():
+            canonical_history.mkdir(parents=True, exist_ok=True)
+            for item in sorted(legacy_history.iterdir()):
+                target = canonical_history / item.name
+                if target.exists():
+                    continue
+                shutil.move(str(item), str(target))
+                moved_history += 1
+
+    return {
+        "canonical_plan_dir": str(canonical_dir),
+        "legacy_plan_dir": str(legacy_dir),
+        "moved_plan_file": moved_plan,
+        "moved_history_entries": moved_history,
+    }
+
+
 def plan_path(workspace: Path) -> Path:
-    return workspace / "07_plan" / "review_plan.md"
+    return workspace / PLAN_DIR_NAME / "review_plan.md"
 
 
 def history_dir(workspace: Path) -> Path:
-    return workspace / "07_plan" / "history"
+    return workspace / PLAN_DIR_NAME / "history"
 
 
 def packet_path(workspace: Path) -> Path:
@@ -59,6 +95,7 @@ def get_plan_status(text: str) -> str:
 
 
 def compute_status(workspace: Path) -> dict:
+    layout = ensure_plan_layout(workspace)
     corpus_rows = read_jsonl(workspace / "02_corpus" / "master_corpus.jsonl")
     fulltext_rows = read_csv(workspace / "04_fulltext" / "fulltext_manifest.csv")
     ready_md = sum(1 for row in fulltext_rows if row.get("md_status") == "ready")
@@ -98,6 +135,10 @@ def compute_status(workspace: Path) -> dict:
         "review_guardrails_exists": guardrails_file.exists(),
         "next_skill": next_skill,
         "next_action": next_action,
+        "canonical_plan_dir": layout["canonical_plan_dir"],
+        "legacy_plan_dir": layout["legacy_plan_dir"],
+        "moved_legacy_plan_file": layout["moved_plan_file"],
+        "moved_legacy_history_entries": layout["moved_history_entries"],
     }
 
 
@@ -157,6 +198,7 @@ def archive_snapshot(workspace: Path, plan_text: str, label: str) -> Path:
 
 
 def approve_plan(workspace: Path, approved_by: str, note: str) -> dict:
+    ensure_plan_layout(workspace)
     path = plan_path(workspace)
     if not path.exists():
         raise FileNotFoundError(f"review_plan.md not found at {path}")
@@ -180,6 +222,7 @@ def approve_plan(workspace: Path, approved_by: str, note: str) -> dict:
 
 
 def reopen_plan(workspace: Path, reopened_by: str, note: str) -> dict:
+    ensure_plan_layout(workspace)
     path = plan_path(workspace)
     if not path.exists():
         raise FileNotFoundError(f"review_plan.md not found at {path}")

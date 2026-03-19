@@ -127,7 +127,7 @@ For variable construction or replication:
 After each retrieved chunk, update either:
 
 - `evidence_table.csv`, if the point is stable enough to reuse
-- a short memo in `07_notes`, if the point is provisional
+- a short memo in `07_plan`, if the point is provisional
 
 Capture only what the text supports:
 

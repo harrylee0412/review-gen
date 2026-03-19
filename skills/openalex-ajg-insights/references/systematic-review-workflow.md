@@ -36,7 +36,7 @@ Turn repeated topic searches into a cumulative review workspace that preserves:
   Store MinerU request and polling snapshots.
 - `06_chunks`
   Store chunk indexes for retrieval.
-- `07_notes`
+- `07_plan`
   Store synthesis notes and memo drafts.
 - `08_outputs`
   Store review outputs prepared for the user.
