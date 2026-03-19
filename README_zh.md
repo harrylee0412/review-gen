@@ -107,6 +107,38 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/download_manifest_
   --max-papers 10
 ```
 
+#### 自动下载范围和边界
+
+自动下载器只会处理 `04_fulltext/fulltext_manifest.csv` 里已有的条目。
+
+一条文献要被自动下载，需同时满足：
+
+1. `full_text_priority` 不低于 `--min-priority`
+2. `need_full_text` 为 yes/true
+3. 有 DOI
+
+默认是增量模式：
+
+1. 本地已有 PDF 且 `pdf_status=ready` 时会跳过
+2. 可用 `--paper-keys` 限定只下指定条目
+3. 可用 `--max-papers` 控制单批数量
+4. 传 `--all-candidates` 才会强制重试所有候选
+
+自动下载经常覆盖不到的情况：
+
+1. 没有 DOI 的文献
+2. 付费墙或解析链路失败的文献
+3. 当前解析链路不覆盖的本地数据库文献
+4. 图书、报告、学位论文和手工收集的经典文献
+
+#### 手动补充 PDF 放哪
+
+自动下载拿不到时，手动补充方式：
+
+1. 把 PDF 放到 `04_fulltext/pdf_inbox/`
+2. 文件名建议 `YEAR__FirstAuthor__ShortTitle.pdf`
+3. 后续照常跑 MinerU，成功后原始 PDF 会归档到 `04_fulltext/pdf_archive/`
+
 ### 5）PDF 转换与分块
 
 ```bash
@@ -137,6 +169,12 @@ python <review-gen-home>/skills/management-review-planner/scripts/build_review_p
 - `dynamic` 模式优先覆盖 screening 中已纳入（included）的文献。
 - 默认不会为了凑数量回填低价值未纳入文献，除非显式传 `--allow-fallback`。
 - 中文规划支持从 `02_corpus/cnki_ris/` 导入知网 RIS。
+
+中文文献来源与放置路径：
+
+1. 在知网等中文数据库按主题检索后导出 `.ris`
+2. 将 RIS 文件放入 `02_corpus/cnki_ris/`
+3. planner 会把这些记录纳入规划上下文，writer 也可把它们并入引用白名单
 
 ### 7）生成写作包与引用白名单
 

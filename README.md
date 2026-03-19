@@ -108,6 +108,38 @@ python <review-gen-home>/skills/openalex-ajg-insights/scripts/download_manifest_
   --max-papers 10
 ```
 
+#### Auto-download scope and limits
+
+The auto-downloader only targets papers that already exist in `04_fulltext/fulltext_manifest.csv`.
+
+A paper is eligible only when all of these are true:
+
+1. `full_text_priority` is greater than or equal to `--min-priority`
+2. `need_full_text` is marked yes/true
+3. DOI is present
+
+Default behavior is incremental:
+
+1. If a local PDF already exists and `pdf_status=ready`, it is skipped
+2. `--paper-keys` can limit to specific records
+3. `--max-papers` caps one batch size
+4. `--all-candidates` overrides skip and retries all candidates
+
+Typical out-of-scope cases for auto-download:
+
+1. records without DOI
+2. resolver failures behind publisher paywalls
+3. local-language databases outside the current resolver chain
+4. books/reports/theses and manually collected classics
+
+#### Manual PDF intake
+
+When auto-download cannot cover a paper, add PDFs manually:
+
+1. put files into `04_fulltext/pdf_inbox/`
+2. preferred file name: `YEAR__FirstAuthor__ShortTitle.pdf`
+3. run MinerU conversion normally; converted files are archived to `04_fulltext/pdf_archive/`
+
 ### 5) Convert PDFs and chunk Markdown
 
 ```bash
@@ -138,6 +170,12 @@ Notes:
 - `dynamic` mode prioritizes screened-in (`included`) papers.
 - It does not backfill low-value non-included papers unless `--allow-fallback` is set.
 - Chinese planning supports CNKI RIS from `02_corpus/cnki_ris/`.
+
+Chinese literature source and location:
+
+1. export RIS files from CNKI (or other Chinese databases that can export RIS-like metadata)
+2. place files in `02_corpus/cnki_ris/`
+3. planner loads these records into planning context, and writer can include them in citation allowlist generation
 
 ### 7) Build writing packet and citation allowlist
 
