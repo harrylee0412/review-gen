@@ -221,8 +221,6 @@ def build_workspace(workspace: Path, topic: str) -> dict[str, str]:
             "\n".join(
                 [
                     "MINERU_API_KEY=",
-                    "MINERU_ACCESS_KEY=replace-with-your-access-key",
-                    "MINERU_SECRET_KEY=replace-with-your-secret-key",
                     f"MINERU_API_BASE_URL={DEFAULT_MINERU_BASE}",
                     "MINERU_MODEL_VERSION=vlm",
                     "MINERU_LANGUAGE=en",
@@ -556,23 +554,7 @@ def resolve_mineru_token(env: dict[str, str]) -> str:
     if token:
         return token
 
-    access_key = env.get("MINERU_ACCESS_KEY", "").strip()
-    secret_key = env.get("MINERU_SECRET_KEY", "").strip()
-    if access_key and secret_key:
-        try:
-            from openxlab.xlab.handler.user_token import get_jwt
-        except ImportError as exc:
-            raise ValueError(
-                "openxlab-dev is required to exchange MINERU_ACCESS_KEY and MINERU_SECRET_KEY for a JWT. "
-                "Install the optional dependency with `pip install -r requirements-openxlab.txt`, "
-                "or use MINERU_API_KEY instead."
-            ) from exc
-        try:
-            return get_jwt(access_key, secret_key)
-        except Exception as exc:
-            raise ValueError(f"Failed to get a JWT from OpenXLab using MINERU_ACCESS_KEY and MINERU_SECRET_KEY: {exc}") from exc
-
-    raise ValueError("Provide MINERU_API_KEY or MINERU_ACCESS_KEY plus MINERU_SECRET_KEY in the env file.")
+    raise ValueError("Provide MINERU_API_KEY in the env file. Access-key/secret-key auth is no longer supported.")
 
 
 def authorization_header_value(token: str) -> str:

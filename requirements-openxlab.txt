@@ -1,4 +1,0 @@
-# Optional dependency for MinerU JWT exchange via OpenXLab.
-# Install this only if you authenticate MinerU with
-# MINERU_ACCESS_KEY + MINERU_SECRET_KEY instead of MINERU_API_KEY.
-openxlab-dev==0.0.7

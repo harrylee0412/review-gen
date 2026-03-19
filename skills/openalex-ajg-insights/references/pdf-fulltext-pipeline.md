@@ -114,8 +114,6 @@ Template:
 
 ```env
 MINERU_API_KEY=
-MINERU_ACCESS_KEY=replace-with-your-access-key
-MINERU_SECRET_KEY=replace-with-your-secret-key
 MINERU_API_BASE_URL=https://mineru.net
 MINERU_MODEL_VERSION=vlm
 MINERU_LANGUAGE=en
@@ -124,9 +122,7 @@ MINERU_ENABLE_TABLE=true
 MINERU_IS_OCR=false
 ```
 
-Store a direct MinerU token in `MINERU_API_KEY` if you have one. This is the preferred path because it does not require the optional OpenXLab dependency.
-
-If you instead store `MINERU_ACCESS_KEY` and `MINERU_SECRET_KEY`, install `requirements-openxlab.txt` first; the workflow script will then try to exchange those credentials for a JWT through the OpenXLab SDK before calling MinerU. Do not hardcode any credential in scripts, notes, or chat responses.
+Store your MinerU token in `MINERU_API_KEY`. Do not hardcode any credential in scripts, notes, or chat responses.
 
 ## When To Turn On OCR
 

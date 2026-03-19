@@ -178,14 +178,6 @@ Install the base dependencies:
 pip install -r requirements.txt
 ```
 
-If you authenticate MinerU with `MINERU_ACCESS_KEY` plus `MINERU_SECRET_KEY`, install the optional OpenXLab helper dependency as well:
-
-```bash
-pip install -r requirements-openxlab.txt
-```
-
-For the simplest setup, prefer a direct MinerU token in `MINERU_API_KEY`; that path does not need the OpenXLab package.
-
 ### MinerU API for PDF-to-Markdown
 
 In this project, the MinerU integration is mainly used to convert collected PDF papers into Markdown so the downstream chunking, retrieval, planning, and drafting steps work on clean text instead of raw PDFs.
@@ -208,7 +200,6 @@ Notes:
 
 - The official docs state that API calls require an `Authorization: Bearer <token>` header.
 - The API is currently in beta, and the published limits include up to 200 MB and 600 pages per file, with 2000 pages per day at the highest priority tier per account.
-- If you use `MINERU_ACCESS_KEY` plus `MINERU_SECRET_KEY` instead of a direct token, install `requirements-openxlab.txt` first.
 
 The toolkit is path-agnostic and works in PowerShell, macOS Terminal, and Linux shells.
 

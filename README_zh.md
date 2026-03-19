@@ -177,14 +177,6 @@ python <review-gen-home>/skills/management-review-writer/scripts/validate_draft_
 pip install -r requirements.txt
 ```
 
-如果你准备用 `MINERU_ACCESS_KEY` + `MINERU_SECRET_KEY` 给 MinerU 做鉴权，再额外安装 OpenXLab 的可选依赖：
-
-```bash
-pip install -r requirements-openxlab.txt
-```
-
-如果想要最省事的安装路径，优先使用 `MINERU_API_KEY`，这条路径不需要 OpenXLab 依赖。
-
 ### MinerU API：主要用于 PDF 转 Markdown
 
 在这个项目里，MinerU 这部分能力主要是把收集到的论文 PDF 转成 Markdown，方便后续做分块检索、证据整理、综述规划和正文写作，而不是直接让模型去读原始 PDF。
@@ -207,7 +199,6 @@ MINERU_API_KEY=your-token-from-mineru
 
 - 官方文档要求请求头里带 `Authorization: Bearer <token>`。
 - 官方当前公开的限制说明里提到：单文件不超过 200 MB、单文件不超过 600 页；每个账号每天有 2000 页最高优先级额度，超出后优先级会下降。
-- 如果你不用直接 Token，而是用 `MINERU_ACCESS_KEY` + `MINERU_SECRET_KEY`，记得先额外安装 `requirements-openxlab.txt`。
 
 项目已做路径无关设计，可在 PowerShell、macOS Terminal、Linux shell 使用。
 
