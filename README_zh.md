@@ -249,6 +249,7 @@ review-gen/
 │   └── paper-download-mcp/
 ├── README.md
 ├── README_zh.md
+├── LICENSE
 ├── requirements.txt
 └── skills/
     ├── openalex-ajg-insights/
@@ -256,3 +257,7 @@ review-gen/
     ├── management-review-writer/
     └── review-orchestrator/
 ```
+
+## License
+
+MIT，见 [LICENSE](LICENSE)。
